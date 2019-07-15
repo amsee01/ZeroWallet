@@ -1,0 +1,221 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="ECCLib.js"></script>
+<script src="bundle.js"></script>
+<script src='biginteger.js'></script>
+<script src='schemeNumber.js'></script>
+<script src='build/forge-sha256.min.js'></script>
+<script src="bcmath-min.js" type="text/javascript"></script>
+<script src="pdf417-min.js" type="text/javascript"></script>
+<script src='decimal.js'></script>
+<script src='secrets.min.js'></script>
+
+
+<script>
+$(document).ready(function(){
+$("#login").submit(function(event){
+  event.preventDefault();
+
+  function h2d(s) {
+
+    function add(x, y) {
+        var c = 0, r = [];
+        var x = x.split('').map(Number);
+        var y = y.split('').map(Number);
+        while(x.length || y.length) {
+            var s = (x.pop() || 0) + (y.pop() || 0) + c;
+            r.unshift(s < 10 ? s : s - 10);
+            c = s < 10 ? 0 : 1;
+        }
+        if(c) r.unshift(c);
+        return r.join('');
+    }
+
+    var dec = '0';
+    s.split('').forEach(function(chr) {
+        var n = parseInt(chr, 16);
+        for(var t = 8; t; t >>= 1) {
+            dec = add(dec, dec);
+            if(n & t) dec = add(dec, '1');
+        }
+    });
+    return dec;
+  }
+
+  function generateBarCode(barcodeVal,element){
+
+    PDF417.init(barcodeVal);
+    var barcode = PDF417.getBarcodeArray();
+    // block sizes (width and height) in pixels
+    var bw = 2;
+    var bh = 2;
+    var canvas = document.createElement('canvas');
+    canvas.width = bw * barcode['num_cols'];
+    canvas.height = bh * barcode['num_rows'];
+
+
+    document.getElementById(element).appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+    // graph barcode elements
+    var y = 0;
+    // for each row
+      for (var r = 0; r < barcode['num_rows']; ++r) {
+          var x = 0;
+              // for each column
+              for (var c = 0; c < barcode['num_cols']; ++c) {
+                  if (barcode['bcode'][r][c] == 1) {
+                      ctx.fillRect(x, y, bw, bh);
+                  }
+                  x += bw;
+              }
+              y += bh;
+          }
+  }
+
+// Where the actual code starts
+
+
+  var usr = $("#username").val();
+  var pw2 = $("#pw2").val();
+  var hashpw1 = forge_sha256($("#pw1").val());
+  var hashpw2 = forge_sha256($("#pw2").val());
+
+  var sn = SchemeNumber;
+  var fn = sn.fn;
+/*
+  var Xpw1 = fn.div0(String(h2d(hashpw1)),fn.expt("10","40"));
+  var Ypw1 = fn.abs(fn.mod0(String(h2d(hashpw1)),fn.expt("10","40")));
+
+  console.log("Value of pw1 X: "+HashtoPoint(hashpw1)[0]);
+*/
+
+  Decimal.set({ toExpPos: 10000 });
+  Decimal.set({ precision: 10000 });
+  console.log(hashpw1);
+  var temp = HashtoPoint(String(h2d(hashpw1)));
+  xpw1 = String(temp[0]);
+  ypw1 = String(temp[1]);
+
+  var randarray = new Uint32Array(8);
+  window.crypto.getRandomValues(randarray);
+  r=String(randarray[0]).concat(String(randarray[1]),String(randarray[2]),String(randarray[3]),String(randarray[4]),String(randarray[5]),String(randarray[6]),String(randarray[7]));
+  //r ='3536172651414602261324045678803937234399';
+  rinv = String(ECInverse(r));
+  console.log("RANDOM: "+r+" INVERSE:"+rinv);
+/*
+  var test12 = ECExponent('12','53453453');
+  keyinv = (Decimal(String(ECInverse('2'))).toHex().toString().substring(2));
+  console.log("KeyInv:" +keyinv);
+  console.log("X^rand:"+test12);
+  console.log("X:"+String(ECExponent('12',keyinv)));
+*/
+  //var Alpha = h2d(forge_sha256(fn.expt(String(h2d(hashpw2)), String(r).substring(1,4))));
+
+  //temp = ECExponent(xpw1.toString(),r.toHex().toString().substring(2));
+
+  //temp = ECModExponent(xpw1.toString(),r.toString());
+  temp = ECModExponent(xpw1,r);
+  var AlphaX = temp[0];
+  var AlphaY = temp[1];
+  console.log("Password Coordinates:" +String(xpw1)+" , "+String(ypw1));
+  console.log("Randomised Coordinates:"+ String(AlphaX)+" , "+String(AlphaY));
+  //alert(Alpha);s
+  //console.log("AlX: "+ AlphaX.toString() +"  AlY: "+AlphaY.toString());
+  //console.log("xpw1: "+xpw1.toString()+" ALX: "+Decimal(AlphaX).toString()+"  Inverse: "+String(ECExponent(Decimal(AlphaX).toHex().toString().substring(2),rinv.toHex().toString().substring(2))));
+
+  $.post("http://localhost:3000","a=".concat(String(AlphaX),"&u=",String(forge_sha256(usr)),"&t=register"))
+    .done(function(data) {
+
+
+      //alert (data);
+      //alert(data);
+      var Beta = ECModExponent(data, rinv);
+      rw = forge_sha256(String(hashpw1).concat(String(Beta[0])));
+      console.log("RW: "+rw);
+
+      var shares = [String('801').concat(String(hashpw2)),String('802').concat(String(rw))];
+      var privshare = secrets.newShare("03",shares);
+      console.log("NEW SHARE: "+privshare);
+      var secret = secrets.combine(shares);
+      console.log("SECRET: "+secret);
+
+      while(document.getElementById('barcode').firstChild != null)
+      {
+        document.getElementById('barcode').removeChild(document.getElementById('barcode').firstChild);
+      }
+      
+      generateBarCode(secret, 'barcode');
+      var ParNode = document.createElement("p");
+      var AddrNode = document.createTextNode(secret);
+      ParNode.appendChild(AddrNode);
+      document.getElementById('barcode').appendChild(ParNode);
+
+
+      /*
+      USE MATHEMATICAL SECRET SHARING
+      var Xpw2 = fn.div0(Beta, fn.expt("10","40"));
+      var Ypw2 = fn.abs(fn.mod0(Beta, fn.expt("10","40")));
+      var gradient = fn["/"](fn["-"](Ypw2,Ypw1),fn["-"](Xpw2,Xpw1));
+      var intcp = fn["-"](Ypw1,fn["*"](gradient, Xpw1));
+
+      var Priv =   forge_sha256(fn["number->string"](intcp));
+
+      //Generate K3 as a safe storage
+
+
+      var K3X = r;
+      console.log("K3X = ",r);
+
+      var K3Y = fn["+"](fn["*"](gradient, r), intcp);
+      console.log("K3Y = ",fn["number->string"](K3Y));
+      */
+
+      /*
+      REMOVE OLD CODE
+      if(document.getElementById('barcode').firstChild != null)
+      {
+        document.getElementById('barcode').removeChild(document.getElementById('barcode').firstChild);
+        document.getElementById('barcode').removeChild(document.getElementById('barcode').firstChild);
+      }
+      */
+
+    }
+  );
+/*
+//alert(Beta);
+console.log(Beta);
+var Xpw2 = fn.div0(Beta, fn.expt("10","40"));
+var Ypw2 = fn.abs(fn.mod0(Beta, fn.expt("10","40")));
+var gradient = fn["/"](fn["-"](Ypw2,Ypw1),fn["-"](Xpw2,Xpw1));
+var intcp = fn["-"](Ypw1,fn["*"](gradient, Xpw1));
+
+//console.log(Xpw1);
+//console.log(Ypw1);
+
+console.log(Xpw2);
+console.log(Ypw2);
+*/
+});
+});
+</script>
+
+</head>
+
+<body>
+<form id="login" action="" method="post">
+  Username: <input type="text" id="username"><br><br>
+  Password 1: <input type="password" id="pw1"><br>
+  Password 2: <input type="password" id="pw2"> <br><br>
+  <input type="submit" value="Submit">
+
+  <br><br>
+  <div id="barcode"></div>
+
+</form>
+
+
+
+</body>
+
+</html>

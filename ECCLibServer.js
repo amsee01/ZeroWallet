@@ -6,16 +6,6 @@ var cs = require('coinstring'); //npm install --save coinstring@2.0.0
 var ecparams = ecurve.getCurveByName('secp256k1',"",""); //remember to remove 2nd and 3rd param from names.js
 //var Buffer = require('buffer/').Buffer;
 
-exports.ECExponent = function (gx, expo){
-
-  var exponent = new Buffer(expo, 'hex');
-  var xpt = new Buffer(gx, 'hex')
-  var pt = ecparams.pointFromX(true,BigInteger.fromBuffer(xpt));
-  var curvePt = pt.multiply(BigInteger.fromBuffer(exponent));
-
-  return [String(curvePt.affineX), String(curvePt.affineY)];
-}
-
 exports.ECInverse = function (key) {
   var privateKey = new Buffer(key, 'hex')
   var privst1 = BigInteger.fromBuffer(privateKey);
@@ -33,7 +23,7 @@ exports.HashtoPoint = function (gx){
 
 }
 
-exports.ECModExponent = function (gx, expo){
+exports.ECExponent = function (gx, expo){
 
   var exponent = BigInteger(String(expo));
   var xpt = BigInteger(String(gx));

@@ -10,10 +10,10 @@ var Hash = require('./build/forge-sha256.min.js');
 
 window.ECExponent = function (gx, expo){
 
-  var exponent = new Buffer(expo, 'hex');
-  var xpt = new Buffer(gx, 'hex')
-  var pt = ecparams.pointFromX(true,BigInteger.fromBuffer(xpt));
-  var curvePt = pt.multiply(BigInteger.fromBuffer(exponent));
+  var exponent = BigInteger(String(expo));
+  var xpt = BigInteger(String(gx));
+  var pt = ecparams.pointFromX(true,xpt);
+  var curvePt = pt.multiply(exponent);
 
   return [String(curvePt.affineX), String(curvePt.affineY)];
 }

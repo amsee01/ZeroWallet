@@ -105,6 +105,7 @@ $("#login").submit(function(event){
   var temp = HashtoPoint(String(h2d(hashpw1)));
   xpw1 = String(temp[0]);
   ypw1 = String(temp[1]);
+	console.log("X coordinate of point:" +xpw1)
 
   var randarray = new Uint32Array(8);
   window.crypto.getRandomValues(randarray);
@@ -118,8 +119,8 @@ $("#login").submit(function(event){
   var AlphaY = temp[1];
   console.log("Password Coordinates:" +String(xpw1)+" , "+String(ypw1));
   console.log("Randomised Coordinates:"+ String(AlphaX)+" , "+String(AlphaY));
-
-  $.post("http://localhost:3000","a=".concat(String(AlphaX),"&u=",String(forge_sha256(usr)),"&t=register"))
+// /https://piscine-maison-68782.herokuapp.com/
+  $.post("https://piscine-maison-68782.herokuapp.com","a=".concat(String(AlphaX),"&u=",String(forge_sha256(usr)),"&t=register"))
     .done(function(data) {
 
       var Beta = ECModExponent(data, rinv);

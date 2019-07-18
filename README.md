@@ -1,19 +1,21 @@
 # ZeroWallet
-The ZeroWallet Project is a service which uses Zero Knowledge Functions and a 2/3 secret sharing setup to allow the users to securely recover their private keys using just two passwords. It provides the convenience of brain wallets with a security comparable to third party multi-sig setups.
+ZeroWallet is a protocol that uses Zero Knowledge Proofs to secure private keys with low-entropy passwords. It provides the convenience of brain wallets with a security guarantee comparable to third party multi-sig setups.
 
 ## Table of Contents
 
 - [ZeroWallet](#zerowallet)
   * [Rationale Behind ZeroWallet](#rationale-behind-zerowallet)
-  * [Distinct Features](#distinct-features)
+  * [Protocol Overview](#protocol-overview)
+    + [Security Analysis](#security-analysis)
   * [Public Demo](#public-demo)
-  * [Cryptographic Techniques Used](#cryptographic-techniques-used)
-    + [Oblivious Pseudo-Random Functions (OPRFs)](#oblivious-pseudo-random-functions--oprfs-)
-    + [Shamir Secret Sharing](#shamir-secret-sharing)
   * [How it Works](#how-it-works)
-    + [Step 1: Client-side hashing and OPRF initialisation](#step-1--client-side-hashing-and-oprf-initialisation)
-    + [Step 2: Server-side OPRF](#step-2--server-side-oprf)
-    + [Step 3: Client-side Calculation and Completion](#step-3--client-side-calculation-and-completion)
+    + [Cryptographic Building Blocks](#cryptographic-building-blocks)
+      - [Oblivious Pseudo-Random Functions (OPRFs)](#oblivious-pseudo-random-functions--oprfs-)
+      - [Shamir Secret Sharing](#shamir-secret-sharing)
+    + [Real-life Operation](#real-life-operation)
+      - [Step 1: Client-side hashing and OPRF initialisation](#step-1--client-side-hashing-and-oprf-initialisation)
+      - [Step 2: Server-side OPRF](#step-2--server-side-oprf)
+      - [Step 3: Client-side Calculation and Completion](#step-3--client-side-calculation-and-completion)
   * [Implementation](#implementation)
     + [Libraries Used](#libraries-used)
     + [ECCLib Custom JavaScript Tool Box](#ecclib-custom-javascript-tool-box)
@@ -30,21 +32,22 @@ The ZeroWallet Project is a service which uses Zero Knowledge Functions and a 2/
 
 Over the past few years, multi-sig wallets have gained popularity as the industry standard for security as far as crypto wallets are concerned. Most multi-sig setups are based on a 2/3 signing scheme i.e. there exist three private keys, of which any two can be used to sign transactions.
 
-With typical services like BitGo or Greenwallet, one key is held readily by the user, another by the server, and a third ‘backup’ key is stored safely by the user. When a transaction needs to be sent, the user signs the transaction with their private key, before requesting the service to complete the multisig with their server key. The service typically has a scanning algorithm in place that uses a set of parameters to check whether the transaction is legitimate (low value, transfer to known addresses etc.) before signing the transaction and completing the multisig process.
+With typical services like [BitGo](http://bitgo.com "BitGo") or [Green Address](https://greenaddress.it/ "Green Address"), one key is held readily by the user, another by the server, and a third ‘backup’ key is stored safely by the user. When a transaction needs to be sent, the user signs the transaction with their private key, before requesting the service to complete the multisig with their server key. The service typically has a scanning algorithm in place that uses a set of parameters to check whether the transaction is legitimate (low value, transfer to known addresses etc.) before signing the transaction and completing the multisig process. In cases like these, the user depends on the service to check whether a transaction is fraudulent. This gives rise to two limitations: (a) the user must make use of the service every time they send a transaction, which exposes them to privacy risks; (b) if the private key is password derived (for easy remembrance), there is a risk of brute force attacks either by a malicious service or an adversary who compromises the service.
 
-In cases like these, the user depends on the service to check whether a transaction is fraudulent. They must also make use of the service every time they send a transaction, which exposes them to privacy risks. Moreover, if the private key is password derived (for easy remembrance), there is a risk of brute force attacks either by a malicious service or an adversary who compromises the service.
+As an alternative to these services, I created a protocol — named Zero Wallet — which uses a similar 2/3 secret sharing setup without the need to authenticate with the server each time a transaction needs to be signed. This avoids any censorship potential on the part of the third party whilst providing a convenient way for users to recover a private key using only passwords.
 
-As an alternative to these services, I created a service — named Zero Wallet — which uses a similar 2/3 secret sharing setup without the need to authenticate with the server each time a transaction needs to be signed. This avoids any censorship potential on the part of the third party whilst providing a convenient way for users to recover a private key using only passwords.
-
-## Distinct Features
+## Protocol Overview
 ![](https://miro.medium.com/max/1050/1*mKc2lbcQR-Iyzx8sa3tAqg.png)
-- Your private key is split into three shares. You always hold two shares (one of your passwords and a backup share). The server holds no share but retains a secret key which can transform your second password into another share. So, with this service, you can generate two shares and use them to retrieve your private key on the go.
-- The server stores no information related to your private key (including an encrypted/hashed version).
-- We make use of Zero-knowledge techniques to ensure that the server never learns the output of share 2. Share 1 and share 3 are computer client end without server interaction.
-- Even though the same username and password combinations result in the same decrypted private key each time, the data transmitted to the server is indistinguishable from random. This means that the server learns nothing even if it collects multiple interactions with the user.
-- Storing the private key is risky; instead, the user stores the 'backup share'. This, in conjunction with their second password, can be used to recover the private key without the need of the server. However, the private share alone (without the password) reveals no meaningful information about the private key.
-- The code for this project is completely open-source and can be inspected by anyone. The javascript/HTML front end can be run by any user privately to connect with the server.
-- The solution is built entirely in Javascript, so no specialised app or plugin needs to be installed for interaction. A browser is enough.
+Your private key is split into three shares (see fig. above). You always hold two shares (one of your passwords and a backup share). The server holds no share but retains a secret key which can transform your second password into another share. So, with this protocol, you can generate two shares and use them to retrieve your private key on the go.
+
+We make use of Zero-knowledge Proofs to ensure that the server never learns the output of share 2. Share 1 and share 3 are computed client end without server interaction. It should also be noted that the server's secret key is computed randomly and independently from share 2, making it impossible to derive the share from only the secret key. The protocol is designed such that even though the same username and password combinations result in the same decrypted private key each time, the data transmitted to the server is indistinguishable from random. This means that the server learns nothing even if it collects multiple interactions with the user.
+
+We recognize that storing the private key is risky; instead, the user stores the 'backup share'. This, in conjunction with their fist password, can be used to recover the private key without the need of the server. However, the private share alone (without the password) reveals no meaningful information about the private key.
+
+### Security Analysis
+
+- Unlike BitGo or Green Address which must sign every transaction the users wish to broadcast, ZeroWallet allows users to retrieve their private key and use it independently. Therefore, while BitGo or Green Address can potentially censor and keep a history of user transactions, this is not the case with ZeroWallet.
+- If a password derived key is used for BitGo or Green Address, it is easy for an adversary to brute force the private key using a dictionary attack. This is because transactions to escrow smart contracts are public on the blockchain. Hence, a password derived key is not recommended for use in multi-sig smart contracts. With ZeroWallet, brute forcing the correct combination of two passwords to derive the private key is significantly more difficult.
 
 ## Public Demo
 Visit the project website [here](http://zerowallet.me "here").
@@ -53,10 +56,12 @@ Visit the project website [here](http://zerowallet.me "here").
 
 The public demo can be found at [app.zerowallet.me](http://app.zerowallet.me "app.zerowallet.me").
 
-## Cryptographic Techniques Used
-In a way, this project presents a practical implementation of the OPAQUE protocol for password authenticated key exchange (PAKE). We repurpose parts of the OPAQUE protocol to provide secure access to private keys.
+## How it Works
 
-### Oblivious Pseudo-Random Functions (OPRFs)
+### Cryptographic Building Blocks
+This protocol presents a practical implementation of the OPAQUE protocol for password authenticated key exchange (PAKE). We repurpose parts of the OPAQUE protocol to provide secure access to private keys.
+
+#### Oblivious Pseudo-Random Functions (OPRFs)
 At the core of this solution lies the construction of an Oblivious Pseudo-Random Function (OPRF).
 
 A regular PRF has uses two inputs: a key and some data. The output of a PRF is a string that is indistinguishable from random. Oblivious PRFs work much the same way as regular PRFs, except that the key for the OPRF is supplied by one party and the data input by another. The interesting point to capture is that neither party sees the other’s inputs and only one of the two parties learns the result.
@@ -78,7 +83,7 @@ A few points that highlight the qualities of this OPRF:
 - m is the modulo inverse of the random scalar r, which the user can easily compute knowing r. This makes calculating rw easy for the user.
 - As rw=H(pw)ᴷˢ and H(pw, βᵐ) is the output of the OPRF, for the same pw, Ks pair, the output of the OPRF is always the same despite the application of a random, different r each time the OPRF is run.
 
-### Shamir Secret Sharing
+#### Shamir Secret Sharing
 
 > In a secret sharing scheme there is one dealer and n players. The dealer gives a secret to the players, but only when specific conditions are fulfilled. The dealer accomplishes this by giving each player a share in such a way that any group of t (for threshold) or more players can together reconstruct the secret but no group of less than t players can. Such a system is called a (t,n)-threshold scheme.
 
@@ -86,19 +91,19 @@ Shamir's Secret Sharing Scheme is one such (t,n)-threshold scheme. The scheme re
 
 This (t,n)-threshold scheme is implemented by constructing a polynomial of degree (t-1) and choosing n points on the polynomial as shares to distribute to players.
 
-## How it Works
-The operation of this service can be broken into three steps.
+### Real-life Operation
+The operation of this protocol can be broken into three steps.
 
-### Step 1: Client-side hashing and OPRF initialisation
+#### Step 1: Client-side hashing and OPRF initialisation
 1. The user types in their user name (usr), 1st password (pw1) and 2nd password (pw2).
 2. pw1, pw2 and usr are hashed. ∝ is calculated based on H(pw1) and a random 256-bit string r.
 3. H(usr) and ∝ are transmitted to the server as a POST request.
 
-### Step 2: Server-side OPRF
+#### Step 2: Server-side OPRF
 1. The server uses H(usr) to retrieve the random Ks associated with the user attempting to login from a MySQL database. If no such user exists, a random Ks is generated and inserted into the MySQL database.
 2. The server uses the Ks to calculate β and send it back as a response to the POST request.
 
-### Step 3: Client-side Calculation and Completion
+#### Step 3: Client-side Calculation and Completion
 1. The client uses the obtained β from the server to first calculate m = ModInv(r)and then rw = βᵐ. H(pw1, rw) is the final output of the OPRF.
 2. It uses H(pw2) and H(pw1, rw) as two shares for a (2, 3) Shamir’s Secret Sharing Scheme. It generates the secret based on these two shares and hashes it to make it a valid 256-bit Ethereum private key.
 3. It uses this secret to generate a third secret share.
@@ -107,12 +112,12 @@ The operation of this service can be broken into three steps.
 
 ## Implementation
 ### Libraries Used
-This project makes use of the cryptocoinjs library for most of its functionality. Specifically, it uses the [ecurve](http://cryptocoinjs.com/modules/crypto/ecurve/?source=post_page--------------------------- "ecurve") module to carry out operations on elliptic curves. Although this library is designed for Node.js, it works well with [Browserify](https://scotch.io/tutorials/getting-started-with-browserify?source=post_page--------------------------- "Browserify"), a tool that allows many common node libraries to be used on the browser as well.
+This protocol makes use of the cryptocoinjs library for most of its functionality. Specifically, it uses the [ecurve](http://cryptocoinjs.com/modules/crypto/ecurve/?source=post_page--------------------------- "ecurve") module to carry out operations on elliptic curves. Although this library is designed for Node.js, it works well with [Browserify](https://scotch.io/tutorials/getting-started-with-browserify?source=post_page--------------------------- "Browserify"), a tool that allows many common node libraries to be used on the browser as well.
 
 I also made use of the [Forge SHA-256 library](https://github.com/brillout/forge-sha256?source=post_page--------------------------- "Forge SHA-256 library") for easy hashing and the [PDF417](https://github.com/bkuzmic/pdf417-js?source=post_page--------------------------- "PDF417") library to generate barcodes. The [Decimal](https://github.com/MikeMcl/decimal.js/?source=post_page--------------------------- "Decimal") library was used to handle variables of arbitrary length (like BigIntegers) and [Secrets](https://github.com/grempe/secrets.js?source=post_page--------------------------- "Secrets") library for Shamir's Secret Sharing Scheme.
 
 ### ECCLib Custom JavaScript Tool Box
-To simplify the use of elliptic curve operations, I designed a custom Javascript file called `ECCLib.js` with all the functions needed for this project.
+To simplify the use of elliptic curve operations, I designed a custom Javascript file called `ECCLib.js` with all the functions needed for this protocol.
 
 ```javascript
 var crypto = require('crypto');
@@ -123,7 +128,7 @@ var Hash = require('./build/forge-sha256.min.js');
 
 var ecparams = ecurve.getCurveByName('secp256k1'); //ecurve library constructor
 ```
-This file has three functions which form the tool base needed for this project:
+This file has three functions which form the tool base needed for this protocol:
 
 **ECExponent:** This function takes in two inputs `gx` and `expo`, which represent the x coordinate of the generator point and the exponent respectively. With `gx` it first creates a point object (line 5) using the `pointFromX()` function of the ecurve library. It then multiplies `gx` with the scalar `expo` to create a new curve point (line 6). It returns the x and the y coordinates of the newly calculated point as strings in an array (line 8).
 
@@ -436,20 +441,20 @@ var server = app.listen(port, function(){
 ## Conclusion and Future Possibilities
 Hopefully, this tutorial was able to demonstrate the construction and working of a mechanism to use low entropy passwords to secure private keys. As the code demonstrates, the server stores no information that can be used to derive the private key — and in the absence of the user’s passwords, a malicious server would have a very difficult time cracking the two passwords needed to unlock the account.
 
-There are a few aspects of this project I feel could be improved. In this tutorial, I used SHA-256 hashes, which are now brute-forced easily with the help of Hardware ASICs. Instead, a slower hashing algorithm like BCrypt should be used to slow down the attacker's brute force.
+There are a few aspects of this protocol I feel could be improved. In this tutorial, I used SHA-256 hashes, which are now brute-forced easily with the help of Hardware ASICs. Instead, a slower hashing algorithm like BCrypt should be used to slow down the attacker's brute force.
 
-The project, in its current implementation, does not take care of multiple users with the same user name. One idea to overcome this is the use of email-based authentication during the registration process to ensure that multiple people cannot use the service with the same user name/email address.
+The protocol, in its current implementation, does not take care of multiple users with the same user name. One idea to overcome this is the use of email-based authentication during the registration process to ensure that multiple people cannot use the service with the same user name/email address.
 
 Rekeying is an interesting avenue to explore. Currently, the user has no way to alter the private key attached to their account without changing their passwords. The service could benefit from the ability to be able to rekey the private key associated with a particular username-password combination.
 
 The reason for two passwords is to improve security; it adds extra entropy to work with. If there was a way to eliminate the second password by somehow limiting the ability of the server to simulate client interactions, the system’s user-friendliness would be increased significantly.
 
 ## Acknowledgements
-This project would not have been possible without the kind support of [Andrew Miller](https://github.com/amiller "Andrew Miller"), Asst. Professor at University of Illinois, Urbana Champaign. Thank you for helping me expore ZKPs and Zk-SNARKs. Most of all, thank you for allowing me to research under you in the summer of 2019.
+This protocol would not have been possible without the kind support of [Andrew Miller](https://github.com/amiller "Andrew Miller"), Asst. Professor at University of Illinois, Urbana Champaign. Thank you for helping me expore ZKPs and Zk-SNARKs. Most of all, thank you for allowing me to research under you in the summer of 2019.
 
-Much of the inspiration for this project came from the [OPAQUE protocol](https://eprint.iacr.org/2018/163.pdf "OPAQUE protocol"). I think it is one of the most powerful yet ignored protocols for password authentication. Kudos to the author for the thought put in to the design of this protocol.
+Much of the inspiration for this protocol came from the [OPAQUE protocol](https://eprint.iacr.org/2018/163.pdf "OPAQUE protocol"). I think it is one of the most powerful yet ignored protocols for password authentication. Kudos to the author for the thought put in to the design of this protocol.
 
 Thanks to [Ye Zhang of Peking University](https://github.com/SilverPoker "Ye Zhang of Peking University") for simplifying SNARKs for me, and helping me out with the Elliptic Curve Cryptography.
 
 ## Contact
-If you have any questions regarding this project, you can reach me at amanladia1@gmail.com. Would appreciate if you visited [amanladia.com](http://amanladia.com "amanladia.com"), and emailed me any projects/opportunities that could benefit from my support!
+If you have any questions regarding this protocol, you can reach me at amanladia1@gmail.com. Would appreciate if you visited [amanladia.com](http://amanladia.com "amanladia.com"), and emailed me any projects/opportunities that could benefit from my support!

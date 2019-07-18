@@ -449,7 +449,7 @@ This project would not have been possible without the kind support of [Andrew Mi
 
 Much of the inspiration for this project came from the [OPAQUE protocol](https://eprint.iacr.org/2018/163.pdf "OPAQUE protocol"). I think it is one of the most powerful yet ignored protocols for password authentication. Kudos to the author for the thought put in to the design of this protocol.
 
-Thanks to [Ye Zhang of Peking University](https://github.com/SilverPoker "Ye Zhang of Peking University") for simplifying SNARKs for me, and helping me out with the Elliptic Curve Ccryptography.
+Thanks to [Ye Zhang of Peking University](https://github.com/SilverPoker "Ye Zhang of Peking University") for simplifying SNARKs for me, and helping me out with the Elliptic Curve Cryptography.
 
 ## Contact
 If you have any questions regarding this project, you can reach me at amanladia1@gmail.com. Would appreciate if you visited [amanladia.com](http://amanladia.com "amanladia.com"), and emailed me any projects/opportunities that could benefit from my support!

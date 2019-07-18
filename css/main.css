@@ -242,7 +242,7 @@ iframe {
 
   width: 100%;
   display: block;
-  padding-bottom: 80px;
+  padding-bottom: 40px;
 }
 
 /*---------------------------------------------*/
@@ -492,13 +492,13 @@ iframe {
   body * {
     visibility: hidden;
   }
-  #barcode * {
+  #shareprint * {
     visibility: visible;
   }
 
-  #barcode {
-    position: absolute;
-    left: 0;
-    top: 0;
+  #shareprint {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
   }
 }

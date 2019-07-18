@@ -1,6 +1,30 @@
 # ZeroWallet
 The ZeroWallet Project is a service which uses Zero Knowledge Functions and a 2/3 secret sharing setup to allow the users to securely recover their private keys using just two passwords. It provides the convenience of brain wallets with a security comparable to third party multi-sig setups.
 
+## Table of Contents
+
+- [ZeroWallet](#zerowallet)
+  * [Rationale Behind ZeroWallet](#rationale-behind-zerowallet)
+  * [Distinct Features](#distinct-features)
+  * [Public Demo](#public-demo)
+  * [Cryptographic Techniques Used](#cryptographic-techniques-used)
+    + [Oblivious Pseudo-Random Functions (OPRFs)](#oblivious-pseudo-random-functions--oprfs-)
+    + [Shamir Secret Sharing](#shamir-secret-sharing)
+  * [How it Works](#how-it-works)
+    + [Step 1: Client-side hashing and OPRF initialisation](#step-1--client-side-hashing-and-oprf-initialisation)
+    + [Step 2: Server-side OPRF](#step-2--server-side-oprf)
+    + [Step 3: Client-side Calculation and Completion](#step-3--client-side-calculation-and-completion)
+  * [Implementation](#implementation)
+    + [Libraries Used](#libraries-used)
+    + [ECCLib Custom JavaScript Tool Box](#ecclib-custom-javascript-tool-box)
+    + [Client End HTML](#client-end-html)
+    + [Client End JavaScript Application](#client-end-javascript-application)
+      - [Libraries Used](#libraries-used-1)
+      - [App Code](#app-code)
+    + [Server-side Code](#server-side-code)
+  * [Conclusion and Future Possibilities](#conclusion-and-future-possibilities)
+  * [Acknowledgements](#acknowledgements)
+  * [Contact](#contact)
 
 ## Rationale Behind ZeroWallet
 
@@ -419,6 +443,13 @@ The project, in its current implementation, does not take care of multiple users
 Rekeying is an interesting avenue to explore. Currently, the user has no way to alter the private key attached to their account without changing their passwords. The service could benefit from the ability to be able to rekey the private key associated with a particular username-password combination.
 
 The reason for two passwords is to improve security; it adds extra entropy to work with. If there was a way to eliminate the second password by somehow limiting the ability of the server to simulate client interactions, the system’s user-friendliness would be increased significantly.
+
+## Acknowledgements
+This project would not have been possible without the kind support of [Andrew Miller](https://github.com/amiller "Andrew Miller"), Asst. Professor at University of Illinois, Urbana Champaign. Thank you for helping me expore ZKPs and Zk-SNARKs. Most of all, thank you for allowing me to research under you in the summer of 2019.
+
+Much of the inspiration for this project came from the [OPAQUE protocol](https://eprint.iacr.org/2018/163.pdf "OPAQUE protocol"). I think it is one of the most powerful yet ignored protocols for password authentication. Kudos to the author for the thought put in to the design of this protocol.
+
+Thanks to [Ye Zhang of Peking University](https://github.com/SilverPoker "Ye Zhang of Peking University") for simplifying SNARKs for me, and helping me out with the Elliptic Curve Ccryptography.
 
 ## Contact
 If you have any questions regarding this project, you can reach me at amanladia1@gmail.com. Would appreciate if you visited [amanladia.com](http://amanladia.com "amanladia.com"), and emailed me any projects/opportunities that could benefit from my support!

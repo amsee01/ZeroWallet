@@ -1,10 +1,14 @@
 # ZeroWallet
 ZeroWallet is a protocol that uses Zero Knowledge Proofs to secure private keys with low-entropy passwords. It provides the convenience of brain wallets with a security guarantee comparable to third party multi-sig setups.
 
-##Table of Contents
+## Table of Contents
 
 - [ZeroWallet](#zerowallet)
   * [Rationale Behind ZeroWallet](#rationale-behind-zerowallet)
+    + [Plain Wallets and Brain Wallets](#plain-wallets-and-brain-wallets)
+    + [Multi-Sig Protocols](#multi-sig-protocols)
+    + [Threshold Multi-Sig Protocols](#threshold-multi-sig-protocols)
+    + [ZeroWallet - A Threshold Multi-Sig Protocol with Privacy](#zerowallet---a-threshold-multi-sig-protocol-with-privacy)
   * [Protocol Overview](#protocol-overview)
   * [Public Demo](#public-demo)
   * [How it Works](#how-it-works)
@@ -31,24 +35,24 @@ ZeroWallet is a protocol that uses Zero Knowledge Proofs to secure private keys 
 
 To understand why ZeroWallet is different from other services, it is important to consider the strengths and drawbacks of popular wallet recovery protocols. These are discussed below briefly.
 
-###Plain Wallets and Brain Wallets
+### Plain Wallets and Brain Wallets
 Plain wallets refer to ordinary wallets that use full entropy private keys. These include ones that use a random 256 bit string as a private key, or those that use a random combination of 12 seed phrases to secure a wallet. While such wallets have a good resistance to brute force attacks, they can be extremely difficult to remember (unless you're endowed with a photographic memory or are willing to patiently commit seemingly useless information to memory).
 
 Brain wallets refer to those where the private key is generated from a relatively short seed phrase (like a password) which can be easily remembered and recalled. But brute forcing such wallets is especially easy, making them a hard sell even for hot wallets.
 
-###Multi-Sig Protocols
+### Multi-Sig Protocols
 
 Over the past few years, multi-sig wallets have gained popularity as the industry standard for security as far as crypto wallets are concerned. Most multi-sig setups are based on a 2/3 signing scheme i.e. there exist three private keys, of which any two can be used to sign transactions.
 
 With typical services like [BitGo](http://bitgo.com "BitGo") or [Green Address](https://greenaddress.it/ "Green Address"), one key is held readily by the user, another by the server, and a third ‘backup’ key is stored safely by the user. When a transaction needs to be sent, the user signs the transaction with their private key, before requesting the service to complete the multisig with their server key. The service typically has a scanning algorithm in place that uses a set of parameters to check whether the transaction is legitimate (low value, transfer to known addresses etc.) before signing the transaction and completing the multisig process. In cases like these, the user depends on the service to check whether a transaction is fraudulent. This gives rise to two limitations: (a) the user must make use of the service every time they send a transaction, which exposes them to privacy risks; (b) if the private key is password derived (for easy remembrance), there is a risk of brute force attacks either by a malicious service or any adversary who views the transaction from a password derived wallet to a multi-sig smart contract on the public blockchain.
 
-###Threshold Multi-Sig Protocols
+### Threshold Multi-Sig Protocols
 
 To avoid the risk of public brute force (as is the case with password derived multi-sig protocols), threshold multi-sig protocols make use of secret sharing schemes that allow for the recovery of a private key using a threshold number of secret shares.
 
 The [ZenGo](https://zengo.com/ "ZenGo") wallet is one such example; although it claims to be 'keyless', it uses a 2/3 secret sharing scheme to secure your private key. While this does prevent public brute force protection, a password based user key does not protect against a malicious server and continues to expose the user to privacy risks.
 
-###ZeroWallet - A Threshold Multi-Sig Protocol with Privacy
+### ZeroWallet - A Threshold Multi-Sig Protocol with Privacy
 As an alternative to these services, I created a protocol — named Zero Wallet — which uses a similar 2/3 secret sharing setup as threshold multi-sig protocols without the need to authenticate with the server each time a transaction needs to be signed. I was particularly fascinated by the [OPAQUE](https://eprint.iacr.org/2018/163.pdf "OPAQUE") Password Authenticated Key Exchange (PAKE) protocol, which has been adapted to a cryptocurrency setting in this project. This approach avoids any censorship potential on the part of the third party whilst providing a convenient way for users to recover a private key using only passwords. It should be noted that the low entropy of passwords means that a server brute force attack is still possible, but a public one isn't. The comparison of ZeroWallet with other wallet recovery protocols is as below:
 
 ![Comparison with Existing Protocols](http://zerowallet.me/zerowalletcompare.png "Comparison with Existing Protocols")

@@ -1,12 +1,11 @@
 # ZeroWallet
 ZeroWallet is a protocol that uses Zero Knowledge Proofs to secure private keys with low-entropy passwords. It provides the convenience of brain wallets with a security guarantee comparable to third party multi-sig setups.
 
-## Table of Contents
+##Table of Contents
 
 - [ZeroWallet](#zerowallet)
   * [Rationale Behind ZeroWallet](#rationale-behind-zerowallet)
   * [Protocol Overview](#protocol-overview)
-    + [Security Analysis](#security-analysis)
   * [Public Demo](#public-demo)
   * [How it Works](#how-it-works)
     + [Cryptographic Building Blocks](#cryptographic-building-blocks)
